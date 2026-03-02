@@ -1,0 +1,12 @@
+.list-group-item {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Ensure the OpenLayers Map target stays rounded and matches style */
+#ol-map .ol-viewport {
+    border-radius: 10px !important;
+}

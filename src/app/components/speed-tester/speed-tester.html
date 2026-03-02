@@ -1,0 +1,112 @@
+<div class="row justify-content-center py-4 h-100">
+    <div class="col-12 col-md-10 col-lg-8">
+        <div class="card glass-card border-0 shadow-lg p-3 p-md-5 text-center position-relative overflow-hidden">
+            <!-- Background Graphic Effect -->
+            <div class="position-absolute top-0 start-50 translate-middle-x w-100 h-100 opacity-25"
+                style="background: radial-gradient(circle at center, #0d6efd 0%, transparent 60%); z-index: 0; pointer-events: none;">
+            </div>
+
+            <div class="position-relative" style="z-index: 1;">
+                <h2 class="fw-bold mb-4">Network Speed Test</h2>
+
+                @if (testingState === 'idle') {
+                <p class="text-muted mb-5 fs-5">Measure your connection to the BSNL network.</p>
+
+                <div class="mb-4 text-start mx-auto" style="max-width: 400px;">
+                    <label class="form-label fw-bold">Select Tower (Optional):</label>
+                    <select class="form-select border-0 shadow-sm" [(ngModel)]="selectedTowerId">
+                        <option value="">-- Nearest Available (Auto) --</option>
+                        @for (tower of towers; track tower.towerId) {
+                        <option [value]="tower.towerId">{{ tower.name }} ({{ tower.location.city }})</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Big Start Button -->
+                <button class="btn btn-primary btn-lg rounded-pill px-5 py-3 fs-4 shadow-sm hover-lift fw-bold"
+                    (click)="startTest()">
+                    <i class="bi bi-play-fill me-2"></i> START TEST
+                </button>
+                } @else {
+
+                <!-- Test Progress View -->
+                <h4 class="mb-4 text-primary fw-bold">
+                    @if (testingState === 'ping') { Measuring Ping... }
+                    @if (testingState === 'download') { Measuring Download... }
+                    @if (testingState === 'upload') { Measuring Upload... }
+                    @if (testingState === 'submitting') { Analyzing Results... }
+                    @if (testingState === 'complete') { Test Complete! }
+                </h4>
+
+                <div class="progress mb-5" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar"
+                        [style.width]="progress + '%'"></div>
+                </div>
+
+                <div class="row g-4 text-center mt-2 mb-5">
+                    <!-- Ping -->
+                    <div class="col-4">
+                        <div class="p-3 rounded border border-light"
+                            [ngClass]="{'bg-light shadow-sm': testingState === 'ping'}">
+                            <i class="bi bi-arrow-down-up fs-2 text-warning mb-2"></i>
+                            <h6 class="text-muted mb-1">Ping</h6>
+                            <div class="fs-4 fw-bold">{{ (metrics.latency || 0) | number:'1.0-0' }} <small
+                                    class="fs-6 text-muted">ms</small></div>
+                        </div>
+                    </div>
+                    <!-- Download -->
+                    <div class="col-4">
+                        <div class="p-3 rounded border border-light"
+                            [ngClass]="{'bg-light shadow-sm': testingState === 'download'}">
+                            <i class="bi bi-cloud-arrow-down-fill fs-2 text-success mb-2"></i>
+                            <h6 class="text-muted mb-1">Download</h6>
+                            <div class="fs-4 fw-bold">{{ (metrics.downloadSpeed || 0) | number:'1.1-1' }} <small
+                                    class="fs-6 text-muted">Mbps</small></div>
+                        </div>
+                    </div>
+                    <!-- Upload -->
+                    <div class="col-4">
+                        <div class="p-3 rounded border border-light"
+                            [ngClass]="{'bg-light shadow-sm': testingState === 'upload'}">
+                            <i class="bi bi-cloud-arrow-up-fill fs-2 text-primary mb-2"></i>
+                            <h6 class="text-muted mb-1">Upload</h6>
+                            <div class="fs-4 fw-bold">{{ (metrics.uploadSpeed || 0) | number:'1.1-1' }} <small
+                                    class="fs-6 text-muted">Mbps</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Summary -->
+                @if (testingState === 'complete' && resultData) {
+                <div class="alert fade show text-start shadow-sm border-0" [ngClass]="{
+                   'alert-success': resultData.status === 'good',
+                   'alert-warning': resultData.status === 'average',
+                   'alert-danger': resultData.status === 'poor'
+                 }">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fs-3 me-3" [ngClass]="{
+                  'bi-check-circle-fill text-success': resultData.status === 'good',
+                  'bi-exclamation-circle-fill text-warning': resultData.status === 'average',
+                  'bi-x-circle-fill text-danger': resultData.status === 'poor'
+                }"></i>
+                        <div>
+                            <h5 class="alert-heading mb-0 fw-bold">Quality Score: {{ resultData.results.qualityScore }}
+                                ({{ resultData.status | uppercase }})</h5>
+                            <p class="mb-0 small">Tower: {{ resultData.towerId }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="mb-0 fst-italic"><b>AI Analysis:</b> {{ resultData.aiReport }}</p>
+                </div>
+
+                <div class="mt-4">
+                    <button class="btn btn-outline-secondary px-4 me-3" (click)="resetTest()"><i
+                            class="bi bi-arrow-repeat"></i> Test Again</button>
+                    <button class="btn btn-primary px-4" routerLink="/dashboard">Return to Dashboard</button>
+                </div>
+                }
+                }
+            </div>
+        </div>
+    </div>
+</div>

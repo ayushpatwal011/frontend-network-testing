@@ -1,0 +1,151 @@
+<div class="row pt-2 pb-4 h-100">
+    @if (loading) {
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    } @else if (tower) {
+    <!-- Tower Header -->
+    <div class="col-12 mb-4">
+        <div class="card glass-card border-0 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">{{ tower.name }}</h2>
+                    <p class="text-muted mb-0"><i class="bi bi-geo-alt"></i> {{ tower.location.city || 'Unknown City' }}
+                        | ID: {{ tower.towerId }}</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge fs-5" [ngClass]="{
+              'bg-success': tower.status === 'good',
+              'bg-warning text-dark': tower.status === 'average',
+              'bg-danger': tower.status === 'poor',
+              'bg-secondary': tower.status === 'unknown'
+            }">{{ tower.status | uppercase }}</span>
+                    <div class="mt-2 text-muted small">Quality Score: <span class="fw-bold text-dark">{{
+                            tower.latestStats.qualityScore }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Report Section -->
+    <div class="col-12 col-lg-4 mb-4 mb-lg-0">
+        <div class="card glass-card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent pt-4 pb-0 border-0">
+                <h5 class="fw-bold"><i class="bi bi-robot text-primary mb-2"></i> AI Insights</h5>
+            </div>
+            <div class="card-body">
+                @if (latestTest?.aiReport) {
+                <p class="fst-italic text-secondary" style="line-height: 1.6;">
+                    "{{ latestTest?.aiReport }}"
+                </p>
+                <div class="text-end mt-4">
+                    <small class="text-muted">Analyzed: {{ latestTest?.testedAt | date:'medium' }}</small>
+                </div>
+                } @else {
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-info-circle mb-2 d-block fs-4"></i>
+                    No recent AI analysis available.
+                </div>
+                }
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4 pt-0">
+                <button class="btn btn-outline-primary w-100" [routerLink]="['/speed-test', tower.towerId]">
+                    <i class="bi bi-speedometer2"></i> Run Speed Test Here
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats & History Grid -->
+    <div class="col-12 col-lg-8">
+        <div class="row g-4 h-100">
+            <!-- Current Vitals -->
+            <div class="col-12">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card glass-card border-0 text-center py-3 hover-lift shadow-sm">
+                            <h6 class="text-muted mb-1"><i class="bi bi-download text-success"></i> Download</h6>
+                            <h3 class="fw-bold mb-0">{{ tower.latestStats.downloadSpeed | number:'1.1-1' }} <small
+                                    class="fs-6 text-muted">Mbps</small></h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card glass-card border-0 text-center py-3 hover-lift shadow-sm">
+                            <h6 class="text-muted mb-1"><i class="bi bi-upload text-primary"></i> Upload</h6>
+                            <h3 class="fw-bold mb-0">{{ tower.latestStats.uploadSpeed | number:'1.1-1' }} <small
+                                    class="fs-6 text-muted">Mbps</small></h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card glass-card border-0 text-center py-3 hover-lift shadow-sm">
+                            <h6 class="text-muted mb-1"><i class="bi bi-stopwatch text-warning"></i> Ping</h6>
+                            <h3 class="fw-bold mb-0">{{ tower.latestStats.latency | number:'1.0-0' }} <small
+                                    class="fs-6 text-muted">ms</small></h3>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card glass-card border-0 text-center py-3 hover-lift shadow-sm">
+                            <h6 class="text-muted mb-1"><i class="bi bi-wifi"></i> Signal</h6>
+                            <h3 class="fw-bold mb-0">{{ tower.latestStats.signalStrength }} <small
+                                    class="fs-6 text-muted">%</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="col-12 flex-grow-1">
+                <div class="card glass-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent pt-4 pb-2 border-0">
+                        <h5 class="fw-bold">Test History</h5>
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Download</th>
+                                    <th>Upload</th>
+                                    <th>Ping</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (test of tests; track test._id) {
+                                <tr>
+                                    <td class="ps-4 text-muted small">{{ test.testedAt | date:'short' }}</td>
+                                    <td class="fw-bold text-success">{{ test.results.downloadSpeed | number:'1.1-1' }}
+                                        <small>Mbps</small></td>
+                                    <td class="fw-bold text-primary">{{ test.results.uploadSpeed | number:'1.1-1' }}
+                                        <small>Mbps</small></td>
+                                    <td class="text-muted">{{ test.results.latency | number:'1.0-0' }} <small>ms</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [ngClass]="{
+                            'bg-success': test.status === 'good',
+                            'bg-warning text-dark': test.status === 'average',
+                            'bg-danger': test.status === 'poor'
+                          }">{{ test.status | uppercase }}</span>
+                                    </td>
+                                </tr>
+                                } @empty {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No test history available.</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    } @else {
+    <div class="col-12 text-center py-5">
+        <h3 class="text-danger">Tower not found.</h3>
+        <button class="btn btn-primary mt-3" routerLink="/dashboard">Return to Dashboard</button>
+    </div>
+    }
+</div>
