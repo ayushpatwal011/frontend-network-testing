@@ -4,6 +4,14 @@
         <a class="navbar-brand d-flex align-items-center fw-bold" routerLink="/">
             <i class="bi bi-broadcast me-2"></i> BSNL Network Explorer
         </a>
+        @if (ipInfo) {
+        <div class="ms-auto me-3">
+            <p>{{ ipInfo.org }}</p>
+            <p>{{ ipInfo.city }}</p>
+            <p>{{ ipInfo.country }}</p>
+            <span>{{ isBSNL ? 'BSNL' : 'Not BSNL' }}</span>
+        </div>
+        }
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

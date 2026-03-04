@@ -10,14 +10,39 @@
                 <h2 class="fw-bold mb-4">Network Speed Test</h2>
 
                 @if (testingState === 'idle') {
+                @if (checkingNetwork) {
+                <div class="py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <h5 class="text-muted">Verifying network connection...</h5>
+                </div>
+                } @else if (isBSNL === false) {
+                <div class="alert alert-danger mb-4 shadow-sm border-0 text-start mx-auto" style="max-width: 500px;">
+                    <h5 class="alert-heading fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i> Network
+                        Error</h5>
+                    <p class="mb-0">You are not connected to the BSNL network. Please connect to a valid BSNL IP to run
+                        the speed test.</p>
+                </div>
+                } @else {
                 <p class="text-muted mb-5 fs-5">Measure your connection to the BSNL network.</p>
 
                 <div class="mb-4 text-start mx-auto" style="max-width: 400px;">
                     <label class="form-label fw-bold">Select Tower (Optional):</label>
-                    <select class="form-select border-0 shadow-sm" [(ngModel)]="selectedTowerId">
+
+                    <!-- Search Input -->
+                    <div class="input-group mb-2 shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i
+                                class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0"
+                            placeholder="Search tower by name or city..." [(ngModel)]="searchTower">
+                    </div>
+
+                    <select class="form-select shadow-sm" [(ngModel)]="selectedTowerId">
                         <option value="">-- Nearest Available (Auto) --</option>
-                        @for (tower of towers; track tower.towerId) {
+                        @for (tower of filteredTowers; track tower.towerId) {
                         <option [value]="tower.towerId">{{ tower.name }} ({{ tower.location.city }})</option>
+                        }
+                        @if (filteredTowers.length === 0) {
+                        <option disabled>No towers found matching "{{searchTower}}"</option>
                         }
                     </select>
                 </div>
@@ -27,6 +52,7 @@
                     (click)="startTest()">
                     <i class="bi bi-play-fill me-2"></i> START TEST
                 </button>
+                }
                 } @else {
 
                 <!-- Test Progress View -->
@@ -46,9 +72,10 @@
                 <div class="row g-4 text-center mt-2 mb-5">
                     <!-- Ping -->
                     <div class="col-4">
-                        <div class="p-3 rounded border border-light"
-                            [ngClass]="{'bg-light shadow-sm': testingState === 'ping'}">
-                            <i class="bi bi-arrow-down-up fs-2 text-warning mb-2"></i>
+                        <div class="p-3 rounded border border-light metric-card"
+                            [ngClass]="{'bg-light shadow-sm metric-active': testingState === 'ping'}">
+                            <i class="bi bi-arrow-down-up fs-2 text-warning mb-2"
+                                [class.pulse-animation]="testingState === 'ping'"></i>
                             <h6 class="text-muted mb-1">Ping</h6>
                             <div class="fs-4 fw-bold">{{ (metrics.latency || 0) | number:'1.0-0' }} <small
                                     class="fs-6 text-muted">ms</small></div>
@@ -56,9 +83,10 @@
                     </div>
                     <!-- Download -->
                     <div class="col-4">
-                        <div class="p-3 rounded border border-light"
-                            [ngClass]="{'bg-light shadow-sm': testingState === 'download'}">
-                            <i class="bi bi-cloud-arrow-down-fill fs-2 text-success mb-2"></i>
+                        <div class="p-3 rounded border border-light metric-card"
+                            [ngClass]="{'bg-light shadow-sm metric-active': testingState === 'download'}">
+                            <i class="bi bi-cloud-arrow-down-fill fs-2 text-success mb-2"
+                                [class.pulse-animation]="testingState === 'download'"></i>
                             <h6 class="text-muted mb-1">Download</h6>
                             <div class="fs-4 fw-bold">{{ (metrics.downloadSpeed || 0) | number:'1.1-1' }} <small
                                     class="fs-6 text-muted">Mbps</small></div>
@@ -66,9 +94,10 @@
                     </div>
                     <!-- Upload -->
                     <div class="col-4">
-                        <div class="p-3 rounded border border-light"
-                            [ngClass]="{'bg-light shadow-sm': testingState === 'upload'}">
-                            <i class="bi bi-cloud-arrow-up-fill fs-2 text-primary mb-2"></i>
+                        <div class="p-3 rounded border border-light metric-card"
+                            [ngClass]="{'bg-light shadow-sm metric-active': testingState === 'upload'}">
+                            <i class="bi bi-cloud-arrow-up-fill fs-2 text-primary mb-2"
+                                [class.pulse-animation]="testingState === 'upload'"></i>
                             <h6 class="text-muted mb-1">Upload</h6>
                             <div class="fs-4 fw-bold">{{ (metrics.uploadSpeed || 0) | number:'1.1-1' }} <small
                                     class="fs-6 text-muted">Mbps</small></div>

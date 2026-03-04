@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Tower } from '../models/tower.model';
+import { IpInfo, Tower } from '../models/tower.model';
 import { TestResult } from '../models/test-result.model';
 
 @Injectable({
@@ -10,27 +10,37 @@ import { TestResult } from '../models/test-result.model';
 })
 export class ApiService {
     private apiUrl = environment.apiUrl;
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) { }
-
-    getTowers(): Observable<Tower[]> {
-        return this.http.get<Tower[]>(`${this.apiUrl}/towers`);
+    async getTowers(): Promise<Tower[]> {
+        return firstValueFrom(this.http.get<Tower[]>(`${this.apiUrl}/towers`));
     }
 
-    getTowerById(towerId: string): Observable<Tower> {
-        return this.http.get<Tower>(`${this.apiUrl}/towers/${towerId}`);
+    async getTowerById(towerId: string): Promise<Tower> {
+        return firstValueFrom(this.http.get<Tower>(`${this.apiUrl}/towers/${towerId}`));
     }
 
-    getTests(towerId?: string): Observable<TestResult[]> {
+    async getTests(towerId?: string): Promise<TestResult[]> {
         const url = towerId ? `${this.apiUrl}/tests?towerId=${towerId}` : `${this.apiUrl}/tests`;
-        return this.http.get<TestResult[]>(url);
+        return firstValueFrom(this.http.get<TestResult[]>(url));
     }
 
-    getTestById(id: string): Observable<TestResult> {
-        return this.http.get<TestResult>(`${this.apiUrl}/tests/${id}`);
+    async getTestById(id: string): Promise<TestResult> {
+        return firstValueFrom(this.http.get<TestResult>(`${this.apiUrl}/tests/${id}`));
     }
 
-    submitTestResult(data: Partial<TestResult>): Observable<{ success: boolean, testResult: TestResult }> {
-        return this.http.post<{ success: boolean, testResult: TestResult }>(`${this.apiUrl}/tests`, data);
+    async submitTestResult(data: Partial<TestResult>): Promise<{ success: boolean, testResult: TestResult }> {
+        return firstValueFrom(this.http.post<{ success: boolean, testResult: TestResult }>(`${this.apiUrl}/tests`, data));
     }
+
+    private readonly IP_INFO_URL = 'https://ipinfo.io/json';
+
+    async getIpInfo(): Promise<IpInfo> {
+        return firstValueFrom(this.http.get<IpInfo>(this.IP_INFO_URL));
+    }
+
+    isBSNL(org: string): boolean {
+        return org.includes('BSNL') || org.includes('National Internet Backbone');
+    }
+
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -19,9 +19,13 @@ type TestState = 'idle' | 'ping' | 'download' | 'upload' | 'submitting' | 'compl
 export class SpeedTesterComponent implements OnInit {
   towers: Tower[] = [];
   selectedTowerId: string = '';
+  searchTower: string = '';
 
   testingState: TestState = 'idle';
   progress = 0;
+
+  isBSNL: boolean | null = null;
+  checkingNetwork = true;
 
   metrics = {
     latency: 0,
@@ -32,26 +36,48 @@ export class SpeedTesterComponent implements OnInit {
 
   resultData: TestResult | null = null;
 
-  constructor(
-    private apiService: ApiService,
-    private speedTestService: SpeedTestService,
-    private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
-  ) { }
+  private apiService = inject(ApiService);
+  private speedTestService = inject(SpeedTestService);
+  private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Check if tower ID was passed in route
     const routeTowerId = this.route.snapshot.paramMap.get('id');
 
-    this.apiService.getTowers().subscribe(t => {
-      this.towers = t;
+    try {
+      // Parallel fetch network info and towers
+      const [towersData, ipData] = await Promise.all([
+        this.apiService.getTowers(),
+        this.apiService.getIpInfo()
+      ]);
+
+      this.towers = towersData;
       if (routeTowerId) {
         this.selectedTowerId = routeTowerId;
       } else if (this.towers.length > 0) {
         this.selectedTowerId = this.towers[0].towerId; // Default to first available
       }
+
+      // check if user is on BSNL network
+      // this.isBSNL = this.apiService.isBSNL(ipData.org);
+
+      this.checkingNetwork = false;
       this.cdr.detectChanges();
-    });
+    } catch (err) {
+      console.error('Error fetching data', err);
+      this.checkingNetwork = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  get filteredTowers(): Tower[] {
+    if (!this.searchTower) return this.towers;
+    const s = this.searchTower.toLowerCase();
+    return this.towers.filter(t =>
+      t.name.toLowerCase().includes(s) ||
+      (t.location.city && t.location.city.toLowerCase().includes(s))
+    );
   }
 
   async startTest() {
@@ -97,26 +123,24 @@ export class SpeedTesterComponent implements OnInit {
     }
   }
 
-  private submitResults() {
+  private async submitResults() {
     const payload = {
       towerId: this.selectedTowerId,
       userLocation: { lat: 20.59, lng: 78.96 }, // Mock user location
       results: { ...this.metrics, qualityScore: 0 } // Score handled by backend
     };
 
-    this.apiService.submitTestResult(payload).subscribe({
-      next: (res) => {
-        this.resultData = res.testResult;
-        this.testingState = 'complete';
-        this.progress = 100;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Failed to submit results', err);
-        alert('Failed to save results.');
-        this.resetTest();
-      }
-    });
+    try {
+      const res = await this.apiService.submitTestResult(payload);
+      this.resultData = res.testResult;
+      this.testingState = 'complete';
+      this.progress = 100;
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error('Failed to submit results', err);
+      alert('Failed to save results.');
+      this.resetTest();
+    }
   }
 
   resetTest() {

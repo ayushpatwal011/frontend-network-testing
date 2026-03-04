@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { Tower } from '../../models/tower.model';
+import { IpInfo, Tower } from '../../models/tower.model';
 
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -13,7 +13,7 @@ import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
-import { Style, Circle, Fill, Stroke } from 'ol/style';
+import { Style, Icon, Text, Fill, Stroke } from 'ol/style';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,26 +27,26 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   loading = true;
   map!: Map;
   vectorSource = new VectorSource();
+  ipInfo: IpInfo | null = null;
+  isBSNL: boolean = true;
 
-  constructor(private apiService: ApiService, private cdr: ChangeDetectorRef) { }
+  private apiService = inject(ApiService);
+  private cdr = inject(ChangeDetectorRef);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     console.log("running");
-
-    this.apiService.getTowers().subscribe({
-      next: (data) => {
-        console.log(data);
-        this.towers = data;
-        this.loading = false;
-        this.addTowerMarkers();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error fetching towers', err);
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    try {
+      const data = await this.apiService.getTowers();
+      console.log(data);
+      this.towers = data;
+      this.loading = false;
+      this.addTowerMarkers();
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error('Error fetching towers', err);
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -88,6 +88,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.vectorSource.clear();
 
+    const colorMap: Record<string, string> = {
+      'good': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23198754" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>',
+      'average': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffc107" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>',
+      'poor': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23dc3545" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>',
+      'unknown': 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%236c757d" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>'
+    };
+
     this.towers.forEach(tower => {
       if (tower.location && tower.location.lat && tower.location.lng) {
         const feature = new Feature({
@@ -95,13 +102,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           tower: tower
         });
 
-        const color = this.getStatusColor(tower.status);
+        const svgUrl = colorMap[tower.status] || colorMap['unknown'];
 
         feature.setStyle(new Style({
-          image: new Circle({
-            radius: 8,
-            fill: new Fill({ color: color }),
-            stroke: new Stroke({ color: '#ffffff', width: 2 })
+          image: new Icon({
+            src: svgUrl,
+            scale: 2.5,
+            anchor: [0.5, 1]
+          }),
+          text: new Text({
+            text: tower.towerId,
+            offsetY: -35,
+            font: '10px "Segoe UI", Arial, sans-serif',
+            fill: new Fill({ color: '#000000ff' }),
+            stroke: new Stroke({ color: '#ffffffff', width: 2 })
           })
         }));
 
@@ -118,4 +132,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       default: return '#6c757d';        // Bootstrap Secondary
     }
   }
+
+
+
 }

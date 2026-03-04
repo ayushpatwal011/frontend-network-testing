@@ -1,0 +1,99 @@
+<div class="row justify-content-center py-4 h-100">
+    <div class="col-12 col-xl-10">
+        <div class="card glass-card border-0 shadow-lg p-3 p-md-4 position-relative overflow-hidden">
+            <!-- Background Graphic Effect -->
+            <div class="position-absolute top-0 start-50 translate-middle-x w-100 h-100 opacity-25"
+                style="background: radial-gradient(circle at center, #0d6efd 0%, transparent 60%); z-index: 0; pointer-events: none;">
+            </div>
+
+            <div class="position-relative" style="z-index: 1;">
+                <h2 class="fw-bold mb-4">All Towers</h2>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <mat-form-field appearance="outline" class="w-100">
+                            <mat-label>Search by Name</mat-label>
+                            <input matInput [(ngModel)]="searchName" (keyup)="applyFilter()" placeholder="Ex. Tower A">
+                            <mat-icon matSuffix>search</mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-4">
+                        <mat-form-field appearance="outline" class="w-100">
+                            <mat-label>Latitude</mat-label>
+                            <input matInput [(ngModel)]="searchLat" (keyup)="applyFilter()" placeholder="Ex. 20.59">
+                            <mat-icon matSuffix>location_on</mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-4">
+                        <mat-form-field appearance="outline" class="w-100">
+                            <mat-label>Longitude</mat-label>
+                            <input matInput [(ngModel)]="searchLng" (keyup)="applyFilter()" placeholder="Ex. 78.96">
+                            <mat-icon matSuffix>location_on</mat-icon>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="mat-elevation-z8 overflow-hidden rounded shadow-sm bg-white">
+                    <table mat-table [dataSource]="dataSource" class="w-100">
+
+                        <!-- Name Column -->
+                        <ng-container matColumnDef="name">
+                            <th mat-header-cell *matHeaderCellDef> Name </th>
+                            <td mat-cell *matCellDef="let tower"> <b>{{tower.name}}</b> </td>
+                        </ng-container>
+
+                        <!-- Location Column -->
+                        <ng-container matColumnDef="location">
+                            <th mat-header-cell *matHeaderCellDef> Location </th>
+                            <td mat-cell *matCellDef="let tower">
+                                {{tower.location.city || 'Unknown'}} <br>
+                                <small class="text-muted">({{tower.location.lat | number:'1.2-2'}}, {{tower.location.lng
+                                    | number:'1.2-2'}})</small>
+                            </td>
+                        </ng-container>
+
+                        <!-- Status Column -->
+                        <ng-container matColumnDef="status">
+                            <th mat-header-cell *matHeaderCellDef> Status </th>
+                            <td mat-cell *matCellDef="let tower">
+                                <span class="badge" [ngClass]="{
+                                      'bg-success': tower.status === 'good',
+                                      'bg-warning text-dark': tower.status === 'average',
+                                      'bg-danger': tower.status === 'poor',
+                                      'bg-secondary': tower.status === 'unknown'
+                                    }">{{ tower.status | uppercase }}</span>
+                            </td>
+                        </ng-container>
+
+                        <!-- Score Column -->
+                        <ng-container matColumnDef="score">
+                            <th mat-header-cell *matHeaderCellDef> Quality Score </th>
+                            <td mat-cell *matCellDef="let tower"> {{tower.latestStats.qualityScore}} </td>
+                        </ng-container>
+
+                        <!-- Action Column -->
+                        <ng-container matColumnDef="action">
+                            <th mat-header-cell *matHeaderCellDef> Action </th>
+                            <td mat-cell *matCellDef="let tower">
+                                <a [routerLink]="['/tower', tower.towerId]"
+                                    class="btn btn-sm btn-outline-primary rounded-pill px-3">View</a>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-lift"></tr>
+
+                        <!-- Row shown when there is no matching data. -->
+                        <tr class="mat-row" *matNoDataRow>
+                            <td class="mat-cell text-center p-4 text-muted" colspan="5">No towers matching search
+                                criteria.</td>
+                        </tr>
+                    </table>
+
+                    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]"
+                        aria-label="Select page of towers"></mat-paginator>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>

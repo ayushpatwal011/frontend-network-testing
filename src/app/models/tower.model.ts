@@ -17,3 +17,12 @@ export interface Tower {
     status: 'good' | 'average' | 'poor' | 'unknown';
     createdAt?: string;
 }
+
+
+export interface IpInfo {
+  ip: string;
+  org: string;
+  city: string;
+  region: string;
+  country?: string;
+}
